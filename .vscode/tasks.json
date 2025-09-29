@@ -16,6 +16,21 @@
 				"isDefault": true
 			},
 			"detail": "cd /Users/user/Developer/gilo; go build ./..."
+		},
+		{
+			"type": "process",
+			"label": "go: test workspace",
+			"command": "gotestsum",
+			"args": [
+				"./..."
+			],
+			"problemMatcher": [
+				"$go"
+			],
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
 		}
 	]
 }

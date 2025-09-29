@@ -59,8 +59,16 @@ func (e *Editor) runMainEventLoop() {
 			case *tcell.EventKey:
 				if ev.Key() == tcell.KeyEscape {
 					e.state.Quit()
+
+					break
+				} else if ev.Key() == tcell.KeyEnter {
+					e.state.InsertNewline()
+				} else if ev.Key() == tcell.KeyRune {
+					e.state.InsertRune(ev.Rune())
 				}
 			}
+
+			e.redraw(false)
 		}
 
 		if e.state.QuitFlag() {
