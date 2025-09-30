@@ -11,13 +11,28 @@ func lineText(bs *state.BufferState, lineNum int) string {
 	return string(bs.Data()[lineNum])
 }
 
+func assertCursorAt(t *testing.T, b *state.BufferState, line, col int) {
+	t.Helper()
+
+	cline, ccol := b.CursorPos()
+
+	assert.Equal(t, line, cline)
+	assert.Equal(t, col, ccol)
+}
+
 func TestEditorState(t *testing.T) {
+	t.Parallel()
+
 	t.Run("initial state", func(t *testing.T) {
+		t.Parallel()
+
 		got := state.NewEditorState(1, 1)
 		assert.NotNil(t, got)
 	})
 
 	t.Run("quit flag", func(t *testing.T) {
+		t.Parallel()
+
 		state := state.NewEditorState(1, 1)
 		assert.False(t, state.QuitFlag())
 		state.Quit()
@@ -26,34 +41,43 @@ func TestEditorState(t *testing.T) {
 }
 
 func TestInsertRune(t *testing.T) {
+	t.Parallel()
+
 	t.Run("inserts rune at cursor", func(t *testing.T) {
+		t.Parallel()
+
 		es := state.NewEditorState(1, 1)
 
-		es.Buffer().InsertRune('a')
-		es.Buffer().InsertRune('b')
-		es.Buffer().InsertRune('c')
+		es.Buffer().SetData([]string{
+			"abc",
+		})
 
 		line := lineText(es.Buffer(), 0)
 		assert.Equal(t, "abc", line)
 	})
 
 	t.Run("advances cursor after insert", func(t *testing.T) {
+		t.Parallel()
+
 		es := state.NewEditorState(80, 24)
 
 		es.Buffer().InsertRune('a')
 
-		cRow, cCol := es.Buffer().CursorPos()
-		assert.Equal(t, 0, cRow)
-		assert.Equal(t, 1, cCol)
+		assertCursorAt(t, es.Buffer(), 0, 1)
 	})
 }
 
 func TestInsertNewline(t *testing.T) {
+	t.Parallel()
+
 	t.Run("split line at cursor", func(t *testing.T) {
+		t.Parallel()
+
 		es := state.NewEditorState(80, 24)
-		es.Buffer().InsertRune('a')
-		es.Buffer().InsertRune('b')
-		es.Buffer().InsertRune('c')
+
+		es.Buffer().SetData([]string{
+			"abc",
+		})
 
 		es.Buffer().SetCursorPos(0, 2)
 
@@ -65,5 +89,136 @@ func TestInsertNewline(t *testing.T) {
 		assert.Len(t, lines, 2)
 		assert.Equal(t, "ab", lineText(es.Buffer(), 0))
 		assert.Equal(t, "dc", lineText(es.Buffer(), 1))
+	})
+}
+
+func TestMoveCursorLeft(t *testing.T) {
+	t.Parallel()
+
+	t.Run("move cursor left at beginning of line", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		es.Buffer().MoveCursorLeft()
+		assertCursorAt(t, es.Buffer(), 0, 0)
+	})
+
+	t.Run("move cursor left in line", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+
+		es.Buffer().SetData([]string{
+			"abcd",
+		})
+
+		es.Buffer().SetCursorPos(0, 2)
+		es.Buffer().MoveCursorLeft()
+		assertCursorAt(t, es.Buffer(), 0, 1)
+	})
+}
+
+func TestMoveCursorRight(t *testing.T) {
+	t.Parallel()
+
+	t.Run("move cursor right at end of line", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		es.Buffer().MoveCursorRight()
+		assertCursorAt(t, es.Buffer(), 0, 0)
+	})
+
+	t.Run("move cursor right in line", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+
+		es.Buffer().SetData([]string{
+			"abcd",
+		})
+
+		es.Buffer().SetCursorPos(0, 2)
+		es.Buffer().MoveCursorRight()
+		assertCursorAt(t, es.Buffer(), 0, 3)
+	})
+}
+
+func TestMoveCursorUpDown(t *testing.T) {
+	t.Parallel()
+
+	t.Run("move cursor down when buffer has no data", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+
+		es.Buffer().MoveCursorDown()
+		assertCursorAt(t, es.Buffer(), 0, 0)
+	})
+
+	t.Run("move cursor up when buffer has no data", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+
+		es.Buffer().MoveCursorUp()
+		assertCursorAt(t, es.Buffer(), 0, 0)
+	})
+
+	t.Run("move cursor up/down", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		es.Buffer().SetData(
+			[]string{
+				"Test",
+				"Test",
+				"Test",
+			},
+		)
+
+		es.Buffer().MoveCursorDown()
+		assertCursorAt(t, es.Buffer(), 1, 0)
+
+		es.Buffer().MoveCursorDown()
+		assertCursorAt(t, es.Buffer(), 2, 0)
+
+		es.Buffer().MoveCursorUp()
+		assertCursorAt(t, es.Buffer(), 1, 0)
+
+		es.Buffer().MoveCursorUp()
+		assertCursorAt(t, es.Buffer(), 0, 0)
+	})
+
+	t.Run("move down from longer line to shorter line", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		es.Buffer().SetData(
+			[]string{
+				"Longer line",
+				"Shorter",
+			},
+		)
+
+		es.Buffer().SetCursorPos(0, len(es.Buffer().Data()[0])-1)
+		es.Buffer().MoveCursorDown()
+		assertCursorAt(t, es.Buffer(), 1, 6)
+	})
+
+	t.Run("move up from longer line to shorter line", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		es.Buffer().SetData(
+			[]string{
+				"Shorter",
+				"Longer line",
+			},
+		)
+
+		es.Buffer().SetCursorPos(1, len(es.Buffer().Data()[1])-1)
+		es.Buffer().MoveCursorUp()
+		assertCursorAt(t, es.Buffer(), 0, 6)
 	})
 }

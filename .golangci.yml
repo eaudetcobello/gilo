@@ -5,3 +5,19 @@ linters:
   disable:
     - godox
     - depguard
+    - revive
+    - varnamelen
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gofmt:
+      rewrite-rules:
+        - pattern: 'interface{}'
+          replacement: 'any'
+    gofumpt:
+      extra-rules: true

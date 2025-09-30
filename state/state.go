@@ -48,6 +48,13 @@ func (b *BufferState) InsertNewline() {
 	b.cursorCol = 0 // TODO not gonna work with indentation
 }
 
+func (b *BufferState) SetData(data []string) {
+	b.data = make([][]rune, len(data))
+	for i, line := range data {
+		b.data[i] = []rune(line)
+	}
+}
+
 // CursorPos returns cursorLine, cursorCol.
 func (b *BufferState) CursorPos() (int, int) {
 	return b.cursorLine, b.cursorCol
@@ -68,7 +75,7 @@ func (b *BufferState) RuneAtCursor() (rune, bool) {
 		return 0, false
 	}
 
-	return ([]rune(line))[b.cursorCol], true
+	return line[b.cursorCol], true
 }
 
 func (b *BufferState) MoveCursorLeft() {
@@ -80,6 +87,30 @@ func (b *BufferState) MoveCursorLeft() {
 func (b *BufferState) MoveCursorRight() {
 	if b.cursorCol < len(b.data[b.cursorLine]) {
 		b.cursorCol++
+	}
+}
+
+func (b *BufferState) MoveCursorDown() {
+	if b.cursorLine < len(b.data)-1 {
+		if b.cursorCol >= len(b.data[b.cursorLine+1]) {
+			if len(b.data[b.cursorLine+1]) == 0 {
+				b.cursorCol = 0
+			} else {
+				b.cursorCol = len(b.data[b.cursorLine+1]) - 1
+			}
+		}
+
+		b.cursorLine++
+	}
+}
+
+func (b *BufferState) MoveCursorUp() {
+	if b.cursorLine > 0 {
+		if b.cursorCol >= len(b.data[b.cursorLine-1]) {
+			b.cursorCol = len(b.data[b.cursorLine-1]) - 1
+		}
+
+		b.cursorLine--
 	}
 }
 
