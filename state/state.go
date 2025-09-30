@@ -38,13 +38,14 @@ func (b *BufferState) InsertNewline() {
 
 	b.data[b.cursorLine] = beforeCursor
 
+	// shift lines down
 	newLine := b.cursorLine + 1
 	b.data = append(b.data, nil)
 	copy(b.data[newLine+1:], b.data[newLine:])
 	b.data[newLine] = afterCursor
 
 	b.cursorLine++
-	b.cursorCol = 0
+	b.cursorCol = 0 // TODO not gonna work with indentation
 }
 
 // CursorPos returns cursorLine, cursorCol.
@@ -57,8 +58,32 @@ func (b *BufferState) SetCursorPos(line, col int) {
 	b.cursorCol = col
 }
 
+func (b *BufferState) RuneAtCursor() (rune, bool) {
+	if b.cursorLine >= len(b.data) {
+		return 0, false
+	}
+
+	line := b.data[b.cursorLine]
+	if b.cursorCol >= len(line) {
+		return 0, false
+	}
+
+	return ([]rune(line))[b.cursorCol], true
+}
+
+func (b *BufferState) MoveCursorLeft() {
+	if b.cursorCol > 0 {
+		b.cursorCol--
+	}
+}
+
+func (b *BufferState) MoveCursorRight() {
+	if b.cursorCol < len(b.data[b.cursorLine]) {
+		b.cursorCol++
+	}
+}
+
 func NewEditorState(screenWidth, screenHeight int) *EditorState {
-	// TODO setup buffer see state.go
 	initialBuff := &BufferState{
 		data:       [][]rune{{}},
 		cursorLine: 0,

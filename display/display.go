@@ -10,9 +10,11 @@ import (
 func DrawEditor(screen tcell.Screen, editorState *state.EditorState) {
 	defStyle := tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorRed)
 
+	// clear screen
 	screen.Fill(' ', defStyle)
 	log.Printf("Buffer has %d lines", len(editorState.Buffer().Data()))
 
+	// draw text
 	for row, rowRunes := range editorState.Buffer().Data() {
 		log.Printf("Line %d has %d runes: %q", row, len(rowRunes), string(rowRunes))
 
@@ -20,4 +22,8 @@ func DrawEditor(screen tcell.Screen, editorState *state.EditorState) {
 			screen.SetContent(col, row, r, nil, defStyle)
 		}
 	}
+
+	// draw cursor
+	cLine, cCol := editorState.Buffer().CursorPos()
+	screen.ShowCursor(cCol, cLine)
 }
