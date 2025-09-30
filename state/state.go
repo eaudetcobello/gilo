@@ -18,6 +18,45 @@ func (b *BufferState) Data() [][]rune {
 	return b.data
 }
 
+func (b *BufferState) InsertRune(r rune) {
+	log.Printf("inserting rune %q", r)
+
+	line := b.data[b.cursorLine]
+	line = append(line[:b.cursorCol], append([]rune{r}, line[b.cursorCol:]...)...)
+	b.data[b.cursorLine] = line
+	b.cursorCol++
+}
+
+func (b *BufferState) InsertNewline() {
+	log.Printf("inserting newline")
+
+	line := b.data[b.cursorLine]
+
+	// split line at cursor
+	beforeCursor := append([]rune{}, line[:b.cursorCol]...)
+	afterCursor := append([]rune{}, line[b.cursorCol:]...)
+
+	b.data[b.cursorLine] = beforeCursor
+
+	newLine := b.cursorLine + 1
+	b.data = append(b.data, nil)
+	copy(b.data[newLine+1:], b.data[newLine:])
+	b.data[newLine] = afterCursor
+
+	b.cursorLine++
+	b.cursorCol = 0
+}
+
+// CursorPos returns cursorLine, cursorCol.
+func (b *BufferState) CursorPos() (int, int) {
+	return b.cursorLine, b.cursorCol
+}
+
+func (b *BufferState) SetCursorPos(line, col int) {
+	b.cursorLine = line
+	b.cursorCol = col
+}
+
 func NewEditorState(screenWidth, screenHeight int) *EditorState {
 	// TODO setup buffer see state.go
 	initialBuff := &BufferState{
@@ -43,33 +82,4 @@ func (e *EditorState) QuitFlag() bool {
 
 func (e *EditorState) Quit() {
 	e.quitFlag = true
-}
-
-func (e *EditorState) InsertRune(r rune) {
-	log.Printf("inserting rune %q", r)
-
-	line := e.buffer.data[e.buffer.cursorLine]
-	line = append(line[:e.buffer.cursorCol], append([]rune{r}, line[e.buffer.cursorCol:]...)...)
-	e.buffer.data[e.buffer.cursorLine] = line
-	e.buffer.cursorCol++
-}
-
-func (e *EditorState) InsertNewline() {
-	log.Printf("inserting newline")
-
-	line := e.buffer.data[e.buffer.cursorLine]
-
-	// split line at cursor
-	beforeCursor := append([]rune{}, line[:e.buffer.cursorCol]...)
-	afterCursor := append([]rune{}, line[e.buffer.cursorCol:]...)
-
-	e.buffer.data[e.buffer.cursorLine] = beforeCursor
-
-	newLine := e.buffer.cursorLine + 1
-	e.buffer.data = append(e.buffer.data, nil)
-	copy(e.buffer.data[newLine+1:], e.buffer.data[newLine:])
-	e.buffer.data[newLine] = afterCursor
-
-	e.buffer.cursorLine++
-	e.buffer.cursorCol = 0
 }

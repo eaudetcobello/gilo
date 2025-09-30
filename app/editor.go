@@ -62,9 +62,9 @@ func (e *Editor) runMainEventLoop() {
 
 					break
 				} else if ev.Key() == tcell.KeyEnter {
-					e.state.InsertNewline()
+					e.state.Buffer().InsertNewline()
 				} else if ev.Key() == tcell.KeyRune {
-					e.state.InsertRune(ev.Rune())
+					e.state.Buffer().InsertRune(ev.Rune())
 				}
 			}
 
