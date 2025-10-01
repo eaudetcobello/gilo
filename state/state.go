@@ -66,19 +66,6 @@ func (b *BufferState) SetCursorPos(line, col int) {
 	b.cursorCol = col
 }
 
-func (b *BufferState) RuneAtCursor() (rune, bool) {
-	if b.cursorLine >= len(b.data) {
-		return 0, false
-	}
-
-	line := b.data[b.cursorLine]
-	if b.cursorCol >= len(line) {
-		return 0, false
-	}
-
-	return line[b.cursorCol], true
-}
-
 func (b *BufferState) MoveCursorLeft() {
 	if b.cursorCol > 0 {
 		b.cursorCol--
