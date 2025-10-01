@@ -62,16 +62,25 @@ func (e *Editor) runMainEventLoop() {
 
 					break
 				} else if ev.Key() == tcell.KeyEnter {
+					log.Printf("got keyenter")
 					e.state.Buffer().InsertNewline()
 				} else if ev.Key() == tcell.KeyLeft {
+					log.Printf("got keyleft")
 					e.state.Buffer().MoveCursorLeft()
 				} else if ev.Key() == tcell.KeyRight {
+					log.Printf("got keyright")
 					e.state.Buffer().MoveCursorRight()
 				} else if ev.Key() == tcell.KeyDown {
+					log.Printf("got keydown")
 					e.state.Buffer().MoveCursorDown()
 				} else if ev.Key() == tcell.KeyUp {
+					log.Printf("got keyup")
 					e.state.Buffer().MoveCursorUp()
+				} else if ev.Key() == tcell.KeyBackspace || ev.Key() == tcell.KeyBackspace2 {
+					log.Printf("got keybs")
+					e.state.Buffer().Backspace()
 				} else if ev.Key() == tcell.KeyRune {
+					log.Printf("got rune")
 					e.state.Buffer().InsertRune(ev.Rune())
 				}
 			}

@@ -121,7 +121,7 @@ func TestMoveCursorLeft(t *testing.T) {
 func TestMoveCursorRight(t *testing.T) {
 	t.Parallel()
 
-	t.Run("move cursor right at end of line", func(t *testing.T) {
+	t.Run("move cursor right empty line", func(t *testing.T) {
 		t.Parallel()
 
 		es := state.NewEditorState(80, 24)
@@ -129,7 +129,7 @@ func TestMoveCursorRight(t *testing.T) {
 		assertCursorAt(t, es.Buffer(), 0, 0)
 	})
 
-	t.Run("move cursor right in line", func(t *testing.T) {
+	t.Run("move cursor right", func(t *testing.T) {
 		t.Parallel()
 
 		es := state.NewEditorState(80, 24)
@@ -141,6 +141,10 @@ func TestMoveCursorRight(t *testing.T) {
 		es.Buffer().SetCursorPos(0, 2)
 		es.Buffer().MoveCursorRight()
 		assertCursorAt(t, es.Buffer(), 0, 3)
+
+		// assert can go further than right-most rune
+		es.Buffer().MoveCursorRight()
+		assertCursorAt(t, es.Buffer(), 0, 4)
 	})
 }
 
@@ -201,9 +205,9 @@ func TestMoveCursorUpDown(t *testing.T) {
 			},
 		)
 
-		es.Buffer().SetCursorPos(0, len(es.Buffer().Data()[0])-1)
+		es.Buffer().SetCursorPos(0, len(es.Buffer().Data()[0]))
 		es.Buffer().MoveCursorDown()
-		assertCursorAt(t, es.Buffer(), 1, 6)
+		assertCursorAt(t, es.Buffer(), 1, len(es.Buffer().Data()[1]))
 	})
 
 	t.Run("move up from longer line to shorter line", func(t *testing.T) {
@@ -217,12 +221,12 @@ func TestMoveCursorUpDown(t *testing.T) {
 			},
 		)
 
-		es.Buffer().SetCursorPos(1, len(es.Buffer().Data()[1])-1)
+		es.Buffer().SetCursorPos(1, len(es.Buffer().Data()[1]))
 		es.Buffer().MoveCursorUp()
-		assertCursorAt(t, es.Buffer(), 0, 6)
+		assertCursorAt(t, es.Buffer(), 0, len(es.Buffer().Data()[0]))
 	})
 
-	t.Run("move up with blank line", func (t *testing.T) {
+	t.Run("move up/down with blank line", func (t *testing.T) {
 		t.Parallel()
 
 		es := state.NewEditorState(80, 24)
@@ -234,8 +238,57 @@ func TestMoveCursorUpDown(t *testing.T) {
 			},
 		)
 
+		// up
 		es.Buffer().SetCursorPos(2, len(es.Buffer().Data()[2])-1)
 		es.Buffer().MoveCursorUp()
 		assertCursorAt(t, es.Buffer(), 1, 0)
+
+		// down
+		es.Buffer().SetCursorPos(0, len(es.Buffer().Data()[0])-1)
+		es.Buffer().MoveCursorDown()
+		assertCursorAt(t, es.Buffer(), 1, 0)
+	})
+}
+
+func TestBackspace(t *testing.T) {
+	t.Parallel()
+
+	t.Run("backspace empty line", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		es.Buffer().SetData([]string{})
+
+		es.Buffer().Backspace()
+
+		assertCursorAt(t, es.Buffer(), 0, 0)
+		assert.Equal(t, es.Buffer().Data(), [][]rune{})
+	})
+
+	t.Run("backspace in line removes rune before cursor", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		es.Buffer().SetData([]string{
+			"Line text abc",
+		})
+
+		es.Buffer().SetCursorPos(0, len(es.Buffer().Data()[0])-1)
+
+		es.Buffer().Backspace()
+
+		assertCursorAt(t, es.Buffer(), 0, len(es.Buffer().Data()[0])-1)
+
+		assert.Equal(t, "Line text ac", lineText(es.Buffer(), 0))
+
+		es.Buffer().SetCursorPos(0, 3)
+
+		es.Buffer().Backspace()
+
+		assert.Equal(t, "Lie text ac", lineText(es.Buffer(), 0))
+	})
+
+	t.Run("backspace at start of line moves cursor to end of prev line", func(t *testing.T) {
+		t.Parallel()
 	})
 }

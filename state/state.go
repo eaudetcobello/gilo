@@ -21,7 +21,7 @@ func (b *BufferState) Data() [][]rune {
 
 func (b *BufferState) InsertRune(r rune) {
 	log.Printf("inserting rune %q", r)
-
+	
 	line := b.data[b.cursorLine]
 	line = append(line[:b.cursorCol], append([]rune{r}, line[b.cursorCol:]...)...)
 	b.data[b.cursorLine] = line
@@ -30,21 +30,21 @@ func (b *BufferState) InsertRune(r rune) {
 
 func (b *BufferState) InsertNewline() {
 	log.Printf("inserting newline")
-
+	
 	line := b.data[b.cursorLine]
-
+	
 	// split line at cursor
 	beforeCursor := append([]rune{}, line[:b.cursorCol]...)
 	afterCursor := append([]rune{}, line[b.cursorCol:]...)
-
+	
 	b.data[b.cursorLine] = beforeCursor
-
+	
 	// shift lines down
 	newLine := b.cursorLine + 1
 	b.data = append(b.data, nil)
 	copy(b.data[newLine+1:], b.data[newLine:])
 	b.data[newLine] = afterCursor
-
+	
 	b.cursorLine++
 	b.cursorCol = 0 // TODO not gonna work with indentation
 }
@@ -86,6 +86,7 @@ func (b *BufferState) MoveCursorLeft() {
 }
 
 func (b *BufferState) MoveCursorRight() {
+	// insert-mode: allows going one past the right-most rune
 	if b.cursorCol < len(b.data[b.cursorLine]) {
 		b.cursorCol++
 	}
@@ -97,7 +98,7 @@ func (b *BufferState) MoveCursorDown() {
 			if len(b.data[b.cursorLine+1]) == 0 {
 				b.cursorCol = 0
 			} else {
-				b.cursorCol = len(b.data[b.cursorLine+1]) - 1
+				b.cursorCol = len(b.data[b.cursorLine+1])
 			}
 		}
 
@@ -110,11 +111,21 @@ func (b *BufferState) MoveCursorUp() {
 		if len(b.data[b.cursorLine-1]) == 0 {
 			b.cursorCol = 0
 		} else if b.cursorCol > len(b.data[b.cursorLine-1]) {
-			b.cursorCol = len(b.data[b.cursorLine-1]) - 1
+			b.cursorCol = len(b.data[b.cursorLine-1])
 		}
 
 		b.cursorLine--
 	}
+}
+
+func (b *BufferState) Backspace() {
+	if (b.cursorLine == 0 && b.cursorCol == 0) {
+		return
+	}
+
+	line := b.data[b.cursorLine]
+	b.data[b.cursorLine] = append(line[:b.cursorCol-1], line[b.cursorCol:]...)
+	b.cursorCol--
 }
 
 func NewEditorState(screenWidth, screenHeight int) *EditorState {
