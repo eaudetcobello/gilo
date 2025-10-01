@@ -13,6 +13,7 @@ type Editor struct {
 	termEventChan chan tcell.Event
 	quitChan      chan struct{}
 	state         *state.EditorState
+	filepath string
 }
 
 func NewEditor(screen tcell.Screen) *Editor {
@@ -95,3 +96,18 @@ func (e *Editor) runMainEventLoop() {
 		}
 	}
 }
+
+func (e *Editor) LoadFile(path string) error {
+	if err := e.state.Buffer().LoadFromFile(path); err != nil {
+		return err
+	}
+	e.filepath = path
+	return nil
+}
+
+// func (e *Editor) SaveFile() error {
+// 	if e.filepath == "" {
+// 		return fmt.Errorf("no filename")
+// 	}
+// 	return e.state.Buffer().SaveToFile(e.filepath)
+// }

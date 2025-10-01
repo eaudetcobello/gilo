@@ -19,12 +19,17 @@ func main() {
 	log.SetOutput(logFile)
 	log.Println("Editor starting...")
 
-	if err := initEditor(); err != nil {
+	var filePath string
+	if len(os.Args) > 1 {
+		filePath = os.Args[1]
+	}
+
+	if err := initEditor(filePath); err != nil {
 		exitWithError(err)
 	}
 }
 
-func initEditor() error {
+func initEditor(filepath string) error {
 	screen, err := tcell.NewScreen()
 	if err != nil {
 		return err
@@ -42,8 +47,15 @@ func initEditor() error {
 	)
 
 	editor := app.NewEditor(screen)
-	editor.RunEventLoop()
 
+	// Load file if provided
+	if filepath != "" {
+		if err := editor.LoadFile(filepath); err != nil {
+			return fmt.Errorf("failed to load file: %w", err)
+		}
+	}
+
+	editor.RunEventLoop()
 	return nil
 }
 

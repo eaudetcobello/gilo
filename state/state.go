@@ -1,6 +1,11 @@
 package state
 
-import "log"
+import (
+	"fmt"
+	"log"
+	"os"
+	"strings"
+)
 
 type EditorState struct {
 	screenWidth, screenHeight int
@@ -123,6 +128,17 @@ func (b *BufferState) Backspace() {
 	line := b.data[b.cursorLine]
 	b.data[b.cursorLine] = append(line[:b.cursorCol-1], line[b.cursorCol:]...)
 	b.cursorCol--
+}
+
+func (b *BufferState) LoadFromFile(path string) error {
+	file, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read file: %w", err)
+	}
+
+	b.SetData(strings.Split(string(file), "\n"))
+
+	return nil
 }
 
 func NewEditorState(screenWidth, screenHeight int) *EditorState {
