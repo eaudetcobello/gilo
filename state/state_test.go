@@ -221,4 +221,21 @@ func TestMoveCursorUpDown(t *testing.T) {
 		es.Buffer().MoveCursorUp()
 		assertCursorAt(t, es.Buffer(), 0, 6)
 	})
+
+	t.Run("move up with blank line", func (t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		es.Buffer().SetData(
+			[]string{
+				"Line",
+				"",
+				"Another line",
+			},
+		)
+
+		es.Buffer().SetCursorPos(2, len(es.Buffer().Data()[2])-1)
+		es.Buffer().MoveCursorUp()
+		assertCursorAt(t, es.Buffer(), 1, 0)
+	})
 }

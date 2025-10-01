@@ -14,6 +14,7 @@ type BufferState struct {
 	cursorCol  int
 }
 
+
 func (b *BufferState) Data() [][]rune {
 	return b.data
 }
@@ -106,7 +107,9 @@ func (b *BufferState) MoveCursorDown() {
 
 func (b *BufferState) MoveCursorUp() {
 	if b.cursorLine > 0 {
-		if b.cursorCol >= len(b.data[b.cursorLine-1]) {
+		if len(b.data[b.cursorLine-1]) == 0 {
+			b.cursorCol = 0
+		} else if b.cursorCol > len(b.data[b.cursorLine-1]) {
 			b.cursorCol = len(b.data[b.cursorLine-1]) - 1
 		}
 
