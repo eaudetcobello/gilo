@@ -124,6 +124,18 @@ func (b *BufferState) Backspace() {
 	}
 
 	line := b.data[b.cursorLine]
+
+	// join with previous line
+	if b.cursorCol == 0 && b.cursorLine > 0 {
+		b.cursorCol = len(b.data[b.cursorLine-1])
+		b.data[b.cursorLine-1] = append(b.data[b.cursorLine-1], b.data[b.cursorLine]...)
+		b.data = append(b.data[:b.cursorLine], b.data[b.cursorLine+1:]...)
+		b.cursorLine--
+		return
+	}
+
+	// stay on same line
+	line = b.data[b.cursorLine]
 	b.data[b.cursorLine] = append(line[:b.cursorCol-1], line[b.cursorCol:]...)
 	b.cursorCol--
 }

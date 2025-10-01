@@ -257,12 +257,17 @@ func TestBackspace(t *testing.T) {
 		t.Parallel()
 
 		es := state.NewEditorState(80, 24)
-		es.Buffer().SetData([]string{})
+		es.Buffer().SetData([]string{"",""})
 
 		es.Buffer().Backspace()
 
 		assertCursorAt(t, es.Buffer(), 0, 0)
-		assert.Equal(t, es.Buffer().Data(), [][]rune{})
+
+		es.Buffer().MoveCursorDown()
+
+		es.Buffer().Backspace()
+
+		assertCursorAt(t, es.Buffer(), 0, 0)
 	})
 
 	t.Run("backspace in line removes rune before cursor", func(t *testing.T) {
@@ -290,5 +295,67 @@ func TestBackspace(t *testing.T) {
 
 	t.Run("backspace at start of line moves cursor to end of prev line", func(t *testing.T) {
 		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		es.Buffer().SetData([]string{
+			"Line",
+			"Other line",
+		})
+
+		es.Buffer().SetCursorPos(1, 0)
+
+		es.Buffer().Backspace()
+
+		assertCursorAt(t, es.Buffer(), 0, 4)
+	})
+
+	t.Run("backspace on empty line deletes line", func (t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		es.Buffer().SetData([]string{
+			"Line",
+			"",
+		})
+
+		es.Buffer().SetCursorPos(1, 0)
+
+		es.Buffer().Backspace()
+
+		assertCursorAt(t, es.Buffer(), 0, len(es.Buffer().Data()[0]))
+
+		assert.Len(t, es.Buffer().Data(), 1)
+	})
+	
+	t.Run("backspace joins line", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		es.Buffer().SetData([]string{
+			"Line",
+			"abc",
+		})
+
+		es.Buffer().SetCursorPos(1, 0)
+
+		es.Buffer().Backspace()
+
+		assert.Equal(t, "Lineabc", lineText(es.Buffer(), 0))
+	})
+
+	t.Run("backspace with previous line empty", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		es.Buffer().SetData([]string{
+			"",
+			"abc",
+		})
+
+		es.Buffer().SetCursorPos(1, 0)
+
+		es.Buffer().Backspace()
+
+		assert.Equal(t, "abc", lineText(es.Buffer(), 0))
 	})
 }
