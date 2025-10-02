@@ -13,7 +13,7 @@ type Editor struct {
 	termEventChan chan tcell.Event
 	quitChan      chan struct{}
 	state         *state.EditorState
-	filepath string
+	filepath      string
 }
 
 func NewEditor(screen tcell.Screen) *Editor {
