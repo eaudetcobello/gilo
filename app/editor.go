@@ -73,10 +73,10 @@ func (e *Editor) runMainEventLoop() {
 					e.state.Buffer().MoveCursorRight()
 				} else if ev.Key() == tcell.KeyDown {
 					log.Printf("got keydown")
-					e.state.Buffer().MoveCursorDown()
+					e.state.MoveCursorDown()
 				} else if ev.Key() == tcell.KeyUp {
 					log.Printf("got keyup")
-					e.state.Buffer().MoveCursorUp()
+					e.state.MoveCursorUp()
 				} else if ev.Key() == tcell.KeyBackspace || ev.Key() == tcell.KeyBackspace2 {
 					log.Printf("got keybs")
 					e.state.Buffer().Backspace()
@@ -85,6 +85,10 @@ func (e *Editor) runMainEventLoop() {
 					e.state.Buffer().InsertRune(ev.Rune())
 				}
 			}
+
+			cline, ccol := e.state.Buffer().CursorPos()
+			log.Printf("Cursor at (%d,%d)", cline, ccol)
+			log.Printf("Buffer has %d lines", len(e.state.Buffer().Data()))
 
 			e.redraw(false)
 		}

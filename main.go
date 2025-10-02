@@ -47,11 +47,13 @@ func initEditor(filepath string) error {
 	)
 
 	editor := app.NewEditor(screen)
+	sWidth, sHeight := screen.Size()
+	log.Printf("Editor has dimensions (%d,%d)", sHeight, sWidth)
 
 	// Load file if provided
 	if filepath != "" {
 		if err := editor.LoadFile(filepath); err != nil {
-			return fmt.Errorf("failed to load file: %w", err)
+			return fmt.Errorf("failed to start editor: %w", err)
 		}
 	}
 

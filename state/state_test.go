@@ -1,6 +1,7 @@
 package state_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/eaudetcobello/gilo/state"
@@ -226,7 +227,7 @@ func TestMoveCursorUpDown(t *testing.T) {
 		assertCursorAt(t, es.Buffer(), 0, len(es.Buffer().Data()[0]))
 	})
 
-	t.Run("move up/down with blank line", func (t *testing.T) {
+	t.Run("move up/down with blank line", func(t *testing.T) {
 		t.Parallel()
 
 		es := state.NewEditorState(80, 24)
@@ -257,7 +258,7 @@ func TestBackspace(t *testing.T) {
 		t.Parallel()
 
 		es := state.NewEditorState(80, 24)
-		es.Buffer().SetData([]string{"",""})
+		es.Buffer().SetData([]string{"", ""})
 
 		es.Buffer().Backspace()
 
@@ -309,7 +310,7 @@ func TestBackspace(t *testing.T) {
 		assertCursorAt(t, es.Buffer(), 0, 4)
 	})
 
-	t.Run("backspace on empty line deletes line", func (t *testing.T) {
+	t.Run("backspace on empty line deletes line", func(t *testing.T) {
 		t.Parallel()
 
 		es := state.NewEditorState(80, 24)
@@ -326,7 +327,7 @@ func TestBackspace(t *testing.T) {
 
 		assert.Len(t, es.Buffer().Data(), 1)
 	})
-	
+
 	t.Run("backspace joins line", func(t *testing.T) {
 		t.Parallel()
 
@@ -357,5 +358,85 @@ func TestBackspace(t *testing.T) {
 		es.Buffer().Backspace()
 
 		assert.Equal(t, "abc", lineText(es.Buffer(), 0))
+	})
+}
+
+func TestTopLine(t *testing.T) {
+	t.Run("initial topline", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		lines := make([]string, 100)
+		for i := range lines {
+			lines[i] = fmt.Sprintf("Lorem ipsum, %d", i)
+		}
+		es.Buffer().SetData(lines)
+
+		assert.Equal(t, 0, es.TopLine())
+	})
+	t.Run("move cursor down", func(t *testing.T) {
+		t.Parallel()
+
+		es := state.NewEditorState(80, 24)
+		lines := make([]string, 100)
+		for i := range lines {
+			lines[i] = fmt.Sprintf("Lorem ipsum, %d", i)
+		}
+		es.Buffer().SetData(lines)
+
+		es.Buffer().SetCursorPos(23, 0)
+		es.MoveCursorDown()
+		assert.Equal(t, 1, es.TopLine())
+
+		es.MoveCursorDown()
+		assert.Equal(t, 2, es.TopLine())
+	})
+
+	t.Run("move cursor up", func(t *testing.T) {
+		t.Parallel()
+
+		//----------------
+		// 0
+		// 1
+		// 2
+		// 3
+		// 4
+		// 5
+		// 6
+		// 7
+		// 8
+		//---------------- < viewport end
+		// 9
+		// 10
+		// 11
+		// 12
+		// 13
+		// 14
+		//----------------
+		es := state.NewEditorState(80, 9)
+
+		lines := make([]string, 15)
+		for i := range lines {
+			lines[i] = fmt.Sprintf("Lorem ipsum, %d", i)
+		}
+
+		es.Buffer().SetData(lines)
+
+		// scroll 1 line past screen height, top line is 1
+		es.Buffer().SetCursorPos(8, 0)
+		es.MoveCursorDown()
+		assert.Equal(t, 1, es.TopLine())
+
+		// go down 2 lines past screen height, top line is now 2
+		es.MoveCursorDown()
+		assert.Equal(t, 2, es.TopLine())
+
+		// go up 9 times, from line 10
+		for range 9 {
+			es.MoveCursorUp()
+		}
+
+		// top line is now 1 (10 - 9 = 1)
+		assert.Equal(t, 1, es.TopLine())
 	})
 }

@@ -9,6 +9,7 @@ import (
 
 type EditorState struct {
 	screenWidth, screenHeight int
+	topLine                   int
 	quitFlag                  bool
 	buffer                    *BufferState
 }
@@ -18,7 +19,6 @@ type BufferState struct {
 	cursorLine int
 	cursorCol  int
 }
-
 
 func (b *BufferState) Data() [][]rune {
 	return b.data
@@ -111,7 +111,7 @@ func (b *BufferState) MoveCursorUp() {
 }
 
 func (b *BufferState) Backspace() {
-	if (b.cursorLine == 0 && b.cursorCol == 0) {
+	if b.cursorLine == 0 && b.cursorCol == 0 {
 		return
 	}
 
@@ -153,6 +153,36 @@ func NewEditorState(screenWidth, screenHeight int) *EditorState {
 		screenHeight: screenHeight,
 		buffer:       initialBuff,
 	}
+}
+
+func (e *EditorState) adjustViewport() {
+	cursorLine, _ := e.buffer.CursorPos()
+
+	if cursorLine >= e.topLine+e.screenHeight {
+		e.topLine = cursorLine - e.screenHeight + 1
+	}
+
+	if cursorLine < e.topLine {
+		e.topLine = cursorLine
+	}
+}
+
+func (e *EditorState) ScreenHeight() int {
+	return e.screenHeight
+}
+
+func (e *EditorState) MoveCursorDown() {
+	e.buffer.MoveCursorDown()
+	e.adjustViewport()
+}
+
+func (e *EditorState) MoveCursorUp() {
+	e.buffer.MoveCursorUp()
+	e.adjustViewport()
+}
+
+func (e *EditorState) TopLine() int {
+	return e.topLine
 }
 
 func (e *EditorState) Buffer() *BufferState {
