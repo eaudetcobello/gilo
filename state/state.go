@@ -26,7 +26,7 @@ func (b *BufferState) Data() [][]rune {
 
 func (b *BufferState) InsertRune(r rune) {
 	log.Printf("inserting rune %q", r)
-	
+
 	line := b.data[b.cursorLine]
 	line = append(line[:b.cursorCol], append([]rune{r}, line[b.cursorCol:]...)...)
 	b.data[b.cursorLine] = line
@@ -35,21 +35,21 @@ func (b *BufferState) InsertRune(r rune) {
 
 func (b *BufferState) InsertNewline() {
 	log.Printf("inserting newline")
-	
+
 	line := b.data[b.cursorLine]
-	
+
 	// split line at cursor
 	beforeCursor := append([]rune{}, line[:b.cursorCol]...)
 	afterCursor := append([]rune{}, line[b.cursorCol:]...)
-	
+
 	b.data[b.cursorLine] = beforeCursor
-	
+
 	// shift lines down
 	newLine := b.cursorLine + 1
 	b.data = append(b.data, nil)
 	copy(b.data[newLine+1:], b.data[newLine:])
 	b.data[newLine] = afterCursor
-	
+
 	b.cursorLine++
 	b.cursorCol = 0 // TODO not gonna work with indentation
 }
@@ -136,7 +136,8 @@ func (b *BufferState) LoadFromFile(path string) error {
 		return fmt.Errorf("failed to read file: %w", err)
 	}
 
-	b.SetData(strings.Split(string(file), "\n"))
+	content := strings.TrimRight(string(file), "\n")
+	b.SetData(strings.Split(content, "\n"))
 
 	return nil
 }
