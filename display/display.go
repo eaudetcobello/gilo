@@ -7,32 +7,35 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
+var (
+	DefaultStyle = tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorRed)
+	LineNumStyle = tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorLightGray)
+)
+
+func drawLineNumber(screen tcell.Screen, screenRow, lineNum, gutterWidth int, style tcell.Style) {
+	label := fmt.Sprintf("%*d ", gutterWidth-1, lineNum)
+	for x, r := range label {
+		screen.SetContent(x, screenRow, r, nil, style)
+	}
+}
+
+func drawTextLine(screen tcell.Screen, lineNum int, runes []rune, gutterWidth int, style tcell.Style) {
+	for x, r := range runes {
+		screen.SetContent(x+gutterWidth, lineNum, r, nil, style)
+	}
+}
+
 func DrawEditor(screen tcell.Screen, editorState *state.EditorState) {
-	data := editorState.Buffer().Data()
+	screen.Fill(' ', DefaultStyle)
 
-	defStyle := tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorRed)
-	lineNumStyle := tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorLightGray)
+	gutterWidth := editorState.GutterWidth()
 
-	// clear screen
-	screen.Fill(' ', defStyle)
-
-	gutterWidth := len(fmt.Sprintf("%d", len(data))) + 1
-
-	// draw text
-	topLine := editorState.TopLine()
-	visibleLines := data[topLine:min(topLine+editorState.ScreenHeight(), len(data))]
-	for row, rowRunes := range visibleLines {
-		lineNum := fmt.Sprintf("%*d ", gutterWidth-1, row+topLine+1)
-		for col, r := range lineNum {
-			screen.SetContent(col, row, r, nil, lineNumStyle)
-		}
-
-		for col, r := range rowRunes {
-			screen.SetContent(col+gutterWidth, row, r, nil, defStyle)
-		}
+	for row, rowRunes := range editorState.VisibleLines() {
+		lineNum := editorState.TopLine() + row + 1
+		drawLineNumber(screen, row, lineNum, gutterWidth, LineNumStyle)
+		drawTextLine(screen, row, rowRunes, gutterWidth, DefaultStyle)
 	}
 
-	// draw cursor
-	cLine, cCol := editorState.Buffer().CursorPos()
-	screen.ShowCursor(cCol+gutterWidth, cLine-topLine)
+	cx, cy := editorState.CursorScreenPos()
+	screen.ShowCursor(cx, cy)
 }

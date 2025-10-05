@@ -64,7 +64,7 @@ func (e *Editor) runMainEventLoop() {
 					break
 				} else if ev.Key() == tcell.KeyEnter {
 					log.Printf("got keyenter")
-					e.state.Buffer().InsertNewline()
+					e.state.InsertNewline()
 				} else if ev.Key() == tcell.KeyLeft {
 					log.Printf("got keyleft")
 					e.state.Buffer().MoveCursorLeft()
