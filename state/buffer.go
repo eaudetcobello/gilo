@@ -8,9 +8,9 @@ import (
 )
 
 type BufferState struct {
-	data       [][]rune
-	cursorLine int
-	cursorCol  int
+	data [][]rune
+	cy   int
+	cx   int
 }
 
 func (b *BufferState) Data() [][]rune {
@@ -20,31 +20,31 @@ func (b *BufferState) Data() [][]rune {
 func (b *BufferState) InsertRune(r rune) {
 	log.Printf("inserting rune %q", r)
 
-	line := b.data[b.cursorLine]
-	line = append(line[:b.cursorCol], append([]rune{r}, line[b.cursorCol:]...)...)
-	b.data[b.cursorLine] = line
-	b.cursorCol++
+	line := b.data[b.cy]
+	line = append(line[:b.cx], append([]rune{r}, line[b.cx:]...)...)
+	b.data[b.cy] = line
+	b.cx++
 }
 
 func (b *BufferState) InsertNewline() {
 	log.Printf("inserting newline")
 
-	line := b.data[b.cursorLine]
+	line := b.data[b.cy]
 
 	// split line at cursor
-	beforeCursor := append([]rune{}, line[:b.cursorCol]...)
-	afterCursor := append([]rune{}, line[b.cursorCol:]...)
+	beforeCursor := append([]rune{}, line[:b.cx]...)
+	afterCursor := append([]rune{}, line[b.cx:]...)
 
-	b.data[b.cursorLine] = beforeCursor
+	b.data[b.cy] = beforeCursor
 
 	// shift lines down
-	newLine := b.cursorLine + 1
+	newLine := b.cy + 1
 	b.data = append(b.data, nil)
 	copy(b.data[newLine+1:], b.data[newLine:])
 	b.data[newLine] = afterCursor
 
-	b.cursorLine++
-	b.cursorCol = 0 // TODO not gonna work with indentation
+	b.cy++
+	b.cx = 0 // TODO not gonna work with indentation
 }
 
 func (b *BufferState) SetData(data []string) {
@@ -56,71 +56,71 @@ func (b *BufferState) SetData(data []string) {
 
 // CursorPos returns cursorLine, cursorCol.
 func (b *BufferState) CursorPos() (int, int) {
-	return b.cursorLine, b.cursorCol
+	return b.cy, b.cx
 }
 
 func (b *BufferState) SetCursorPos(line, col int) {
-	b.cursorLine = line
-	b.cursorCol = col
+	b.cy = line
+	b.cx = col
 }
 
 func (b *BufferState) MoveCursorLeft() {
-	if b.cursorCol > 0 {
-		b.cursorCol--
+	if b.cx > 0 {
+		b.cx--
 	}
 }
 
 func (b *BufferState) MoveCursorRight() {
 	// insert-mode: allows going one past the right-most rune
-	if b.cursorCol < len(b.data[b.cursorLine]) {
-		b.cursorCol++
+	if b.cx < len(b.data[b.cy]) {
+		b.cx++
 	}
 }
 
 func (b *BufferState) MoveCursorDown() {
-	if b.cursorLine < len(b.data)-1 {
-		if b.cursorCol >= len(b.data[b.cursorLine+1]) {
-			if len(b.data[b.cursorLine+1]) == 0 {
-				b.cursorCol = 0
+	if b.cy < len(b.data)-1 {
+		if b.cx >= len(b.data[b.cy+1]) {
+			if len(b.data[b.cy+1]) == 0 {
+				b.cx = 0
 			} else {
-				b.cursorCol = len(b.data[b.cursorLine+1])
+				b.cx = len(b.data[b.cy+1])
 			}
 		}
 
-		b.cursorLine++
+		b.cy++
 	}
 }
 
 func (b *BufferState) MoveCursorUp() {
-	if b.cursorLine > 0 {
-		if len(b.data[b.cursorLine-1]) == 0 {
-			b.cursorCol = 0
-		} else if b.cursorCol > len(b.data[b.cursorLine-1]) {
-			b.cursorCol = len(b.data[b.cursorLine-1])
+	if b.cy > 0 {
+		if len(b.data[b.cy-1]) == 0 {
+			b.cx = 0
+		} else if b.cx > len(b.data[b.cy-1]) {
+			b.cx = len(b.data[b.cy-1])
 		}
 
-		b.cursorLine--
+		b.cy--
 	}
 }
 
 func (b *BufferState) Backspace() {
-	if b.cursorLine == 0 && b.cursorCol == 0 {
+	if b.cy == 0 && b.cx == 0 {
 		return
 	}
 
 	// join with previous line
-	if b.cursorCol == 0 && b.cursorLine > 0 {
-		b.cursorCol = len(b.data[b.cursorLine-1])
-		b.data[b.cursorLine-1] = append(b.data[b.cursorLine-1], b.data[b.cursorLine]...)
-		b.data = append(b.data[:b.cursorLine], b.data[b.cursorLine+1:]...)
-		b.cursorLine--
+	if b.cx == 0 && b.cy > 0 {
+		b.cx = len(b.data[b.cy-1])
+		b.data[b.cy-1] = append(b.data[b.cy-1], b.data[b.cy]...)
+		b.data = append(b.data[:b.cy], b.data[b.cy+1:]...)
+		b.cy--
 		return
 	}
 
 	// stay on same line
-	line := b.data[b.cursorLine]
-	b.data[b.cursorLine] = append(line[:b.cursorCol-1], line[b.cursorCol:]...)
-	b.cursorCol--
+	line := b.data[b.cy]
+	b.data[b.cy] = append(line[:b.cx-1], line[b.cx:]...)
+	b.cx--
 }
 
 func (b *BufferState) LoadFromFile(path string) error {

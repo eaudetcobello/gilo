@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	DefaultStyle = tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorRed)
-	LineNumStyle = tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorLightGray)
+	DefaultStyle   = tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)
+	LineNumStyle   = tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorLightGray)
+	StatusBarStyle = tcell.StyleDefault.Background(tcell.ColorWhite).Foreground(tcell.ColorBlack)
 )
 
 func drawLineNumber(screen tcell.Screen, screenRow, lineNum, gutterWidth int, style tcell.Style) {
@@ -25,17 +26,29 @@ func drawTextLine(screen tcell.Screen, lineNum int, runes []rune, gutterWidth in
 	}
 }
 
-func DrawEditor(screen tcell.Screen, editorState *state.EditorState) {
+func drawStatusLine(screen tcell.Screen, lineNum, width int, style tcell.Style) {
+	text := "gilo editor v0.0.1"
+	for x, r := range text {
+		screen.SetContent(x, lineNum, r, nil, style)
+	}
+
+	for x := len(text); x < width; x++ {
+		screen.SetContent(x, lineNum, ' ', nil, style)
+	}
+}
+
+func DrawEditor(screen tcell.Screen, es *state.EditorState) {
 	screen.Fill(' ', DefaultStyle)
 
-	gutterWidth := editorState.GutterWidth()
+	gutterWidth := es.GutterWidth()
 
-	for row, rowRunes := range editorState.VisibleLines() {
-		lineNum := editorState.TopLine() + row + 1
-		drawLineNumber(screen, row, lineNum, gutterWidth, LineNumStyle)
+	for row, rowRunes := range es.VisibleLines() {
+		drawLineNumber(screen, row, es.TopLine()+row+1, gutterWidth, LineNumStyle)
 		drawTextLine(screen, row, rowRunes, gutterWidth, DefaultStyle)
 	}
 
-	cx, cy := editorState.CursorScreenPos()
+	drawStatusLine(screen, es.ScreenHeight()-1, es.ScreenWidth(), StatusBarStyle)
+
+	cx, cy := es.CursorScreenPos()
 	screen.ShowCursor(cx, cy)
 }

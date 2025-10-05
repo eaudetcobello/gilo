@@ -11,9 +11,9 @@ type EditorState struct {
 
 func NewEditorState(screenWidth, screenHeight int) *EditorState {
 	initialBuff := &BufferState{
-		data:       [][]rune{{}},
-		cursorLine: 0,
-		cursorCol:  0,
+		data: [][]rune{{}},
+		cy:   0,
+		cx:   0,
 	}
 
 	return &EditorState{
@@ -23,11 +23,16 @@ func NewEditorState(screenWidth, screenHeight int) *EditorState {
 	}
 }
 
+func (e *EditorState) TextHeight() int {
+	return e.screenHeight - 1
+}
+
 func (e *EditorState) EnsureCursorVisible() {
 	cy, _ := e.buffer.CursorPos()
+	textHeight := e.TextHeight()
 
-	if cy >= e.topLine+e.screenHeight {
-		e.topLine = cy - e.screenHeight + 1
+	if cy >= e.topLine+textHeight {
+		e.topLine = cy - textHeight + 1
 	}
 
 	if cy < e.topLine {
@@ -39,6 +44,10 @@ func (e *EditorState) CursorScreenPos() (x, y int) {
 	line, col := e.buffer.CursorPos()
 	y = line - e.topLine
 	x = col + e.GutterWidth()
+
+	if y > e.TextHeight() {
+		y = e.TextHeight() - 1
+	}
 	return x, y
 }
 
@@ -49,12 +58,16 @@ func (e *EditorState) GutterWidth() int {
 func (e *EditorState) VisibleLines() [][]rune {
 	data := e.buffer.data
 	top := e.topLine
-	bottom := min(top+e.screenHeight, len(data))
+	bottom := min(top+e.TextHeight(), len(data)) // -1 for status line
 	return data[top:bottom]
 }
 
 func (e *EditorState) ScreenHeight() int {
 	return e.screenHeight
+}
+
+func (e *EditorState) ScreenWidth() int {
+	return e.screenWidth
 }
 
 func (e *EditorState) InsertNewline() {
