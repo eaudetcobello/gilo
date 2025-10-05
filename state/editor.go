@@ -1,12 +1,16 @@
 package state
 
-import "fmt"
+import (
+	"fmt"
+	"path/filepath"
+)
 
 type EditorState struct {
 	screenWidth, screenHeight int
 	topLine                   int
 	quitFlag                  bool
 	buffer                    *BufferState
+	filePath                  string
 }
 
 func NewEditorState(screenWidth, screenHeight int) *EditorState {
@@ -99,4 +103,12 @@ func (e *EditorState) QuitFlag() bool {
 
 func (e *EditorState) Quit() {
 	e.quitFlag = true
+}
+
+func (e *EditorState) SetFilename(path string) {
+	e.filePath = path
+}
+
+func (e *EditorState) Filename() string {
+	return filepath.Base(e.filePath)
 }

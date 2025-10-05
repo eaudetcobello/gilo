@@ -9,7 +9,7 @@ import (
 
 var (
 	DefaultStyle   = tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)
-	LineNumStyle   = tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorLightGray)
+	LineNumStyle   = tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorGray)
 	StatusBarStyle = tcell.StyleDefault.Background(tcell.ColorWhite).Foreground(tcell.ColorBlack)
 )
 
@@ -26,14 +26,18 @@ func drawTextLine(screen tcell.Screen, lineNum int, runes []rune, gutterWidth in
 	}
 }
 
-func drawStatusLine(screen tcell.Screen, lineNum, width int, style tcell.Style) {
-	text := "gilo editor v0.0.1"
-	for x, r := range text {
-		screen.SetContent(x, lineNum, r, nil, style)
+func drawStatusLine(screen tcell.Screen, lineNum, width, cx, cy, gutterWidth int, fileName string, style tcell.Style) {
+	text := fmt.Sprintf("%s (%d, %d)", fileName, cy, cx)
+	for x := range gutterWidth {
+		screen.SetContent(x, lineNum, ' ', nil, style)
 	}
 
-	for x := len(text); x < width; x++ {
-		screen.SetContent(x, lineNum, ' ', nil, style)
+	for x, r := range text {
+		screen.SetContent(x+gutterWidth, lineNum, r, nil, style)
+	}
+
+	for x := len(text); x < width+gutterWidth; x++ {
+		screen.SetContent(x+gutterWidth, lineNum, ' ', nil, style)
 	}
 }
 
@@ -47,8 +51,9 @@ func DrawEditor(screen tcell.Screen, es *state.EditorState) {
 		drawTextLine(screen, row, rowRunes, gutterWidth, DefaultStyle)
 	}
 
-	drawStatusLine(screen, es.ScreenHeight()-1, es.ScreenWidth(), StatusBarStyle)
-
 	cx, cy := es.CursorScreenPos()
 	screen.ShowCursor(cx, cy)
+
+	row, col := es.Buffer().CursorPos()
+	drawStatusLine(screen, es.ScreenHeight()-1, es.ScreenWidth(), col+1, row+1, gutterWidth, es.Filename(), StatusBarStyle)
 }
